@@ -1,11 +1,16 @@
+# main.py
+# dependencies: requests, ptyz, python-dateutil
+import datetime
 import threading
 import requests
 import time
+import pytz
 from dateutil import parser
+from datetime import datetime as _datetime
 
 from session import Session
 from reservation import Reservation
-from configs import COOKIE, SHOP_REF, SHOP_NAME, SCHEDULE_LIST, TARGET_TS
+from configs import COOKIE, SHOP_REF, SHOP_NAME, SCHEDULE_LIST, DATE, TIME # TARGET_TS REMOVED
 
 
 def run(clients, schedule):
@@ -50,7 +55,11 @@ def main():
         response = requests.get('https://app.catchtable.co.kr')
         date = response.headers["Date"]
         server_ts = int(parser.parse(date).timestamp())  # 캐치테이블 서버 시간
-        target_ts = TARGET_TS
+        tz = pytz.timezone('Asia/Seoul')
+        dt = DATE + TIME
+        dt_obj = datetime.datetime.strptime(str(dt), '%Y%m%d%H%M%S')
+        dt_with_tz = tz.localize(dt_obj, is_dst=None)
+        target_ts = int((dt_with_tz - _datetime(1970, 1, 1, tzinfo=pytz.utc)).total_seconds())
         diff = target_ts - server_ts
         print(f'{diff}초 남음')
         if diff >= 1:
